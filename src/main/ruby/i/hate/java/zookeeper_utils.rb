@@ -54,7 +54,7 @@ class ZookeeperUtils
       ids.each do |broker_id|
         data = @zk.get_data("/brokers/ids/#{broker_id}", false, stat).to_s
         data = JSON.parse data
-        brokers << {host: data['host'], port: data['port'], id: broker_id}
+        brokers << {host: data['host'], port: data['port'], id: broker_id.to_i}
       end #each
     end #if
     return brokers
