@@ -8,7 +8,7 @@ class OffsetSkew
   def handler(config, context)
     @config = JSON.parse config
     @logger = context.get_logger
-    mins_early = @config["lookbackMinutes"] || 60
+    @mins_early = @config["lookbackMinutes"] || 60
     @earliest = (Time.now.to_i - (mins_early.to_i * 60)) * 1000
     @latest = -1
     ZookeeperUtils.connect @config['zookeeperUrl']
@@ -34,7 +34,7 @@ class OffsetSkew
     skew = (max.to_f - min.to_f) / min.to_f
     skew = 0.0 if skew.send("nan?") #stupid java and ? methods
     skew = 100000.0 if skew.send("infinite?")
-    @logger.log "Topic: #{topic} has skew of: #{skew * 100} percent\n"
+    @logger.log "Topic: #{topic} has skew of: #{"%.2f" % (skew * 100)}% over last #{@mins_early} minutes\n"
   end
 
   def offset_delta(broker, partition, topic)
