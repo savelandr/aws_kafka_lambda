@@ -7,9 +7,9 @@ class OffsetSkew
   java_signature "void handler(String config, com.amazonaws.services.lambda.runtime.Context context)"
   def handler(config, context)
     @config = JSON.parse config
-    @logger = context.get_logger
+    @logger = Java::OrgApacheLog4j::Logger.get_logger(self.class.name)
     @mins_early = @config["lookbackMinutes"] || 60
-    @earliest = (Time.now.to_i - (mins_early.to_i * 60)) * 1000
+    @earliest = (Time.now.to_i - (@mins_early.to_i * 60)) * 1000
     @latest = -1
     ZookeeperUtils.connect @config['zookeeperUrl']
     topics = @config['topics']
@@ -23,18 +23,18 @@ class OffsetSkew
     results = {}
     partitions.each do |partition|
       broker = brokers.find {|b| b[:id].to_i == partition[:leader]}
-      @logger.log "No broker found for partition: #{partition[:partition]}" unless broker
+      @logger.error "No broker found for partition: #{partition[:partition]}" unless broker
       delta = offset_delta(broker, partition[:partition].to_i, topic) if broker
       results[partition[:partition]] = delta
     end
-    @logger.log results.map {|k,v| "Topic: #{topic} partition: #{k} has delta of: #{v}"}.join("\n")
+    results.each {|k,v| @logger.info "Topic: #{topic} partition: #{k} has delta of: #{v}"}
     deltas = results.map {|k,v| v}.compact
     min = deltas.min
     max = deltas.max
     skew = (max.to_f - min.to_f) / min.to_f
     skew = 0.0 if skew.send("nan?") #stupid java and ? methods
     skew = 100000.0 if skew.send("infinite?")
-    @logger.log "Topic: #{topic} has skew of: #{"%.2f" % (skew * 100)}% over last #{@mins_early} minutes\n"
+    @logger.warn "Topic: #{topic} has skew of: #{"%.2f" % (skew * 100)}% over last #{@mins_early} minutes\n"
   end
 
   def offset_delta(broker, partition, topic)
@@ -52,7 +52,7 @@ class OffsetSkew
       delta = latest_offset - earliest_offset
       return delta
     rescue
-      @logger.log "Unable to find offset for partition: #{partition} on broker: #{broker}\n"
+      @logger.error "Unable to find offset for partition: #{partition} on broker: #{broker}\n"
       return nil
     ensure
      consumer.close
