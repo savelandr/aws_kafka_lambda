@@ -27,7 +27,7 @@ class OffsetSkew
       delta = offset_delta(broker, partition[:partition].to_i, topic) if broker
       results[partition[:partition]] = delta
     end
-    results.each {|k,v| @logger.info "Topic: #{topic} partition: #{k} has delta of: #{v}"}
+    results.sort_by(&:last).each {|k,v| @logger.info "Topic: #{topic} partition: #{k} has delta of: #{v}"}
     deltas = results.map {|k,v| v}.compact
     min = deltas.min
     max = deltas.max
