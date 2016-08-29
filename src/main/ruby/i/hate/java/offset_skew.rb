@@ -9,8 +9,9 @@ class OffsetSkew
     @config = JSON.parse config
     @logger = Java::OrgApacheLog4j::Logger.get_logger(self.class.name)
     @mins_early = @config["lookbackMinutes"] || 60
-    @earliest = (Time.now.to_i - (@mins_early.to_i * 60)) * 1000
-    @latest = (Time.now.to_i) * 1000
+    now = Time.now
+    @earliest = (now.to_i - (@mins_early.to_i * 60)) * 1000
+    @latest = (now.to_i) * 1000
     ZookeeperUtils.connect @config['zookeeperUrl']
     topics = @config['topics']
     topics.each {|topic| partition_skew topic}
