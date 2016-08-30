@@ -35,7 +35,7 @@ class OffsetSkew
     skew = (max.to_f - min.to_f) / min.to_f
     skew = 0.0 if skew.send("nan?") #stupid java and ? methods
     skew = 100000.0 if skew.send("infinite?")
-    @logger.warn "Topic: #{topic} has skew of: #{"%.2f" % (skew * 100)}% over last #{@mins_early} minutes\n"
+    @logger.warn "Topic: #{topic} has skew of: #{"%.2f" % (skew * 100)}% over last #{@mins_early} minutes"
   end
 
   def offset_delta(broker, partition, topic)
@@ -53,7 +53,7 @@ class OffsetSkew
       delta = latest_offset - earliest_offset
       return delta
     rescue
-      @logger.error "Unable to find offset for partition: #{partition} on broker: #{broker}\n"
+      @logger.error "Unable to find offset for partition: #{partition} on broker: #{broker}"
       return nil
     ensure
      consumer.close
